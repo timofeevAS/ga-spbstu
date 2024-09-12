@@ -15,7 +15,7 @@ class Population(ABC):
         pass
 
     @abstractmethod
-    def selection(self) -> List[Individual]:
+    def selection(self) -> None:
         pass
 
     @abstractmethod
