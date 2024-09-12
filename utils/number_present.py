@@ -18,7 +18,7 @@ def from_int_to_binary_string(digit: int):
 
 def synchronize_binary_strings(code1: str, code2: str) -> (str, str):
     if len(code1) == len(code2):
-        return
+        return code1, code2
 
     # Extend both str to similar length
     delta = abs(len(code1) - len(code2))
