@@ -15,9 +15,5 @@ class Population(ABC):
         pass
 
     @abstractmethod
-    def selection(self) -> None:
-        pass
-
-    @abstractmethod
     def fitness_function(self, individual: Individual) -> float:
         pass
