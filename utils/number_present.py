@@ -2,7 +2,6 @@ import math
 
 def auto_precision(a: float, b: float, precision=0):
     length = (b - a + 1) * (10 ** precision)
-    print(range)
     res = math.ceil(math.log2(length))
     return res
 
