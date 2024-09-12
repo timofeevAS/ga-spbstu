@@ -16,8 +16,8 @@ class GeneticAlgorithm(ABC):
         """
         pass
 
-    def selection(self) -> None:
+    def reproduction(self) -> None:
         """
-        Method to selection step of genetic algorithm.
+        Method to reproduction step of genetic algorithm.
         :return:
         """
