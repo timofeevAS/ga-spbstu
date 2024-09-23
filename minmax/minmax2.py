@@ -4,17 +4,13 @@ from typing import List, Tuple, Union
 import sys
 import os
 
-from fontTools.merge.util import first
-from sympy.codegen.fnodes import dimension
-
 from examples.branins_rcos_function import BraninsRcosFunction
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from core.function import OneParamFunction, TwoParamFunction
+from core.function import  TwoParamFunction
 from core.ga import GeneticAlgorithm
-from core.individual import Individual, RGAIndividual
-from core.population import Population, RGAPopulation
-from utils.number_present import *
+from core.individual import  RGAIndividual
+from core.population import  RGAPopulation
 
 DEFAULT_CROSSOVER_PROBABILITY = 0.9  # Probability of crossover two individs.
 DEFAULT_MUTATION_PROBABILITY = 0.1  # Probability of mutation via crossover.
