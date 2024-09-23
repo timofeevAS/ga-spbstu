@@ -21,6 +21,8 @@ class Individual(ABC):
 
 class RGAIndividual(ABC):
     def __init__(self, dimension: int, ranges: List[Tuple[float, float]]):
+        self.dimension = dimension
+        self.ranges = ranges
         self.genome: List = []
 
         # Generate random value in genome
