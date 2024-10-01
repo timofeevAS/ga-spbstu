@@ -50,4 +50,4 @@ class BraninsRcosFunction(TwoParamFunction):
         plt.show()
 
 if __name__ == '__main__':
-    BraninsRcosFunction().print_plot_with_points([])
+    BraninsRcosFunction().print_plot_with_points([(-math.pi, 12.275), (math.pi,2.275), (3*math.pi, 2.475)])
