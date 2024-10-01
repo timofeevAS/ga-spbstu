@@ -1,5 +1,6 @@
 import math
 import random
+import time
 from typing import List, Tuple, Union
 import sys
 import os
@@ -245,16 +246,16 @@ class FunctionMinMax2(GeneticAlgorithm):
         return self.population.individuals[0]
 
 if __name__ == '__main__':
-    ga1 = FunctionMinMax2(20, BraninsRcosFunction(), [(7.5, 10), (7.5, 15)])
+    ga1 = FunctionMinMax2(50, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
     ga1.run(40)
 
-    ga2 = FunctionMinMax2(20, BraninsRcosFunction(), [(7.5, 10), (0, 7.5)])
+    ga2 = FunctionMinMax2(50, BraninsRcosFunction(), [(-5, 2.5), (0, 7.5)])
     ga2.run(40)
 
-    ga3 = FunctionMinMax2(20, BraninsRcosFunction(), [(-5, 7.5), (7.5, 15)])
+    ga3 = FunctionMinMax2(50, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)])
     ga3.run(40)
 
-    ga4 = FunctionMinMax2(20, BraninsRcosFunction(), [(-5, 7.5), (0, 7.5)])
+    ga4 = FunctionMinMax2(50, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
     ga4.run(40)
 
     # Collect result:
