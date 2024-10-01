@@ -317,4 +317,4 @@ if __name__ == '__main__':
     with open("dump.json", "w") as fp:
         json.dump(merged, fp)
 
-    BraninsRcosFunction().print_plot_with_points(merged[15]['points'])
+    BraninsRcosFunction().print_plot_with_points(merged[-1]['points'])
