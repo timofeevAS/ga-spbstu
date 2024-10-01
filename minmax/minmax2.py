@@ -149,6 +149,7 @@ class FunctionMinMax2(GeneticAlgorithm):
                  elite_c: int = DEFAULT_ELITE_COUNT):
         super().__init__(population_size, crossover_p, mutation_p)
 
+        self.time_res = None
         self.population = RGATwoParamFuncPopulation(self.population_size, function, ranges)
         self.results = []
 
@@ -249,9 +250,11 @@ class FunctionMinMax2(GeneticAlgorithm):
     def run(self, iteration_count: int) -> None:
         print(f'Started {self.__hash__()}')
         self.total_iter = iteration_count
-
+        self.base_time = time.time()
+        self.time_res = []
         for i in range(iteration_count):
             self.results.append(self.population.individuals)
+            self.time_res.append(time.time() - self.base_time)
             self.round()
             self.current_iter += 1
         print(f'Finished {self.__hash__()}')
@@ -269,7 +272,7 @@ if __name__ == '__main__':
     def run_ga(population_size, function, bounds, iterations):
         ga = FunctionMinMax2(population_size, function, bounds)
         ga.run(iterations)
-        return ga.results
+        return ga.results, ga.time_res
 
     results = dict()
     population_size = 50
@@ -283,9 +286,10 @@ if __name__ == '__main__':
             'ga3': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)], iterations),
             'ga4': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (0, 7.5)], iterations)
         }
-
+        ga_time = dict()
         for key, future in futures.items():
-            results[key] = future.result()
+            results[key] = future.result()[0]
+            ga_time[key] = future.result()[1]
     finish = time.time() - start
     print(finish)
 
@@ -298,6 +302,7 @@ if __name__ == '__main__':
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga2'][i])))
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga3'][i])))
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga4'][i])))
+        merged[i]['time'] = (ga_time['ga1'][i] + ga_time['ga2'][i] + ga_time['ga3'][i] + ga_time['ga4'][i]) / 4
     # Calculate best and average
     f = BraninsRcosFunction()
     for i in range(iterations):
