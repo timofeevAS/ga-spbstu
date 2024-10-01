@@ -1,9 +1,10 @@
-import math
+import json
 import random
-import time
 from typing import List, Tuple, Union
 import sys
 import os
+
+from numpy.ma.extras import average
 
 from examples.branins_rcos_function import BraninsRcosFunction
 from utils.number_present import in_range
@@ -26,7 +27,6 @@ class RGANumber(RGAIndividual):
             self.genome = arg1
             self.dimension = len(self.genome)
             self.ranges = None
-
         elif isinstance(arg1, int) and arg2 is not None:
             super().__init__(arg1, arg2)
         else:
@@ -148,6 +148,7 @@ class FunctionMinMax2(GeneticAlgorithm):
         super().__init__(population_size, crossover_p, mutation_p)
 
         self.population = RGATwoParamFuncPopulation(self.population_size, function, ranges)
+        self.results = []
 
         self.function = function
         self.ranges = ranges
@@ -247,8 +248,10 @@ class FunctionMinMax2(GeneticAlgorithm):
         print('init:')
         print(self.population)
         self.total_iter = iteration_count
+
         for i in range(iteration_count):
             print(f'Round: {i}:\n{self.population}')
+            self.results.append(self.population.individuals)
             self.round()
             self.current_iter += 1
 
@@ -261,45 +264,57 @@ class FunctionMinMax2(GeneticAlgorithm):
         return self.population.individuals[0]
 
 if __name__ == '__main__':
-    ga1 = FunctionMinMax2(50, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
-    ga1.run(40)
+    def run_ga(population_size, function, bounds, iterations):
+        ga = FunctionMinMax2(population_size, function, bounds)
+        ga.run(iterations)
+        return ga.results
 
-    ga2 = FunctionMinMax2(50, BraninsRcosFunction(), [(-5, 2.5), (0, 7.5)])
-    ga2.run(40)
+    results = dict()
+    population_size = 20
+    iterations = 40
 
-    ga3 = FunctionMinMax2(50, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)])
-    ga3.run(40)
+    ga1 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
+    ga1.run(iterations)
+    results['ga1'] = ga1.results
 
-    ga4 = FunctionMinMax2(50, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
-    ga4.run(40)
+    ga2 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(-5, 2.5), (0, 7.5)])
+    ga2.run(iterations)
+    results['ga2'] = ga2.results
+
+    ga3 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)])
+    ga3.run(iterations)
+    results['ga3'] = ga3.results
+
+    ga4 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
+    ga4.run(iterations)
+    results['ga4'] = ga4.results
 
     # Collect result:
-    dots = []
-    for rgan in ga1.get_individs():
-        coords = tuple(rgan.get_real_value())
-        dots.append(coords)
+    merged = dict()
+    for i in range(iterations):
+        merged[i] = {'points':[],'best_individ':None,'average':None}
+        merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]) ,results['ga1'][i])))
+        merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga2'][i])))
+        merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga3'][i])))
+        merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga4'][i])))
 
-    for rgan in ga2.get_individs():
-        coords = tuple(rgan.get_real_value())
-        dots.append(coords)
+    # Calculate best and average
+    f = BraninsRcosFunction()
+    for i in range(iterations):
+        best_individ = merged[i]['points'][0]
+        average = 0
+        for individ in merged[i]['points']:
+            evaluated = f.evaluate(*individ)
+            average += evaluated
+            if evaluated < f.evaluate(*best_individ):
+                best_individ = individ
 
-    for rgan in ga3.get_individs():
-        coords = tuple(rgan.get_real_value())
-        dots.append(coords)
+        average /= len(merged[i]['points'])
 
-    for rgan in ga4.get_individs():
-        coords = tuple(rgan.get_real_value())
-        dots.append(coords)
+        merged[i]['best_individ'] = best_individ
+        merged[i]['average'] = average
 
+    with open("dump.json", "w") as fp:
+        json.dump(merged, fp)
 
-    print(ga1.get_best())
-    print(ga2.get_best())
-    print(ga3.get_best())
-    print(ga4.get_best())
-
-    print(ga1.function.evaluate(*ga1.get_best().get_real_value()))
-    print(ga2.function.evaluate(*ga2.get_best().get_real_value()))
-    print(ga3.function.evaluate(*ga3.get_best().get_real_value()))
-    print(ga4.function.evaluate(*ga4.get_best().get_real_value()))
-
-    BraninsRcosFunction().print_plot_with_points(dots)
+    BraninsRcosFunction().print_plot_with_points(merged[15]['points'])
