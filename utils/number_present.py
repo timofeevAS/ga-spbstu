@@ -1,4 +1,6 @@
 import math
+from typing import Tuple
+
 
 def auto_precision(a: float, b: float, precision=0):
     length = (b - a + 1) * (10 ** precision)
@@ -29,3 +31,10 @@ def synchronize_binary_strings(code1: str, code2: str) -> (str, str):
         code1 = zeros + code1
 
     return code1, code2
+
+
+def in_range(point: float, num_range: Tuple[float, float]) -> bool:
+    if num_range[1] < num_range[0]:
+        raise ValueError(f'Value error: range incorrect, cause {num_range[1]} greater than {num_range[0]}.')
+
+    return num_range[0] <= point <= num_range[1]

@@ -6,6 +6,7 @@ import sys
 import os
 
 from examples.branins_rcos_function import BraninsRcosFunction
+from utils.number_present import in_range
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from core.function import  TwoParamFunction
@@ -207,7 +208,21 @@ class FunctionMinMax2(GeneticAlgorithm):
 
                 parent1, parent2 = random.choices(p.individuals, k=2)
                 # New individual into population.
-                child1, child2 = parent1.sbx_crossover(parent2)
+                child1, child2 = [None, None]
+                while child1 is None or child2 is None:
+                    child1, child2 = parent1.sbx_crossover(parent2)
+
+                    # Validate child1
+                    valid = True
+                    for r in self.ranges:
+                        valid = (valid and
+                                 (in_range(child1.genome[0], r), in_range(child1.genome[1], r)) and
+                                 (in_range(child2.genome[0], r), in_range(child2.genome[1], r)))
+
+                    if not valid:
+                        child1, child2 = [None, None]
+                        print('Child out of ranges')
+
 
                 # Append children into population
                 p.individuals.extend((child1, child2))
