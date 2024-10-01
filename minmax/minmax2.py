@@ -1,3 +1,4 @@
+import concurrent.futures
 import json
 import random
 from typing import List, Tuple, Union
@@ -245,15 +246,14 @@ class FunctionMinMax2(GeneticAlgorithm):
 
 
     def run(self, iteration_count: int) -> None:
-        print('init:')
-        print(self.population)
+        print(f'Started {self.__hash__()}')
         self.total_iter = iteration_count
 
         for i in range(iteration_count):
-            print(f'Round: {i}:\n{self.population}')
             self.results.append(self.population.individuals)
             self.round()
             self.current_iter += 1
+        print(f'Finished {self.__hash__()}')
 
     def get_individs(self) -> List[RGANumber]:
         return self.population.individuals
@@ -271,23 +271,18 @@ if __name__ == '__main__':
 
     results = dict()
     population_size = 20
-    iterations = 40
+    iterations = 5
 
-    ga1 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
-    ga1.run(iterations)
-    results['ga1'] = ga1.results
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = {
+            'ga1': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)], iterations),
+            'ga2': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(-5, 2.5), (0, 7.5)], iterations),
+            'ga3': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)], iterations),
+            'ga4': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)], iterations)
+        }
 
-    ga2 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(-5, 2.5), (0, 7.5)])
-    ga2.run(iterations)
-    results['ga2'] = ga2.results
-
-    ga3 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)])
-    ga3.run(iterations)
-    results['ga3'] = ga3.results
-
-    ga4 = FunctionMinMax2(population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)])
-    ga4.run(iterations)
-    results['ga4'] = ga4.results
+        for key, future in futures.items():
+            results[key] = future.result()
 
     # Collect result:
     merged = dict()
@@ -317,4 +312,4 @@ if __name__ == '__main__':
     with open("dump.json", "w") as fp:
         json.dump(merged, fp)
 
-    BraninsRcosFunction().print_plot_with_points(merged[-1]['points'])
+    BraninsRcosFunction().print_plot_with_points(merged[max(merged.keys())]['points'])
