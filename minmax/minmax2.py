@@ -281,7 +281,7 @@ if __name__ == '__main__':
             'ga1': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)], iterations),
             'ga2': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(-5, 2.5), (0, 7.5)], iterations),
             'ga3': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(-5, 2.5), (7.5, 15)], iterations),
-            'ga4': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)], iterations)
+            'ga4': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (0, 7.5)], iterations)
         }
 
         for key, future in futures.items():
