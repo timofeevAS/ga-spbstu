@@ -1,6 +1,7 @@
 import concurrent.futures
 import json
 import random
+import time
 from typing import List, Tuple, Union
 import sys
 import os
@@ -18,7 +19,7 @@ from core.population import  RGAPopulation
 
 DEFAULT_CROSSOVER_PROBABILITY = 0.9  # Probability of crossover two individs.
 DEFAULT_MUTATION_PROBABILITY = 0.1  # Probability of mutation via crossover.
-DEFAULT_ELITE_COUNT = 10 # Count of `elite` individuals left in transition population.
+DEFAULT_ELITE_COUNT = 5 # Count of `elite` individuals left in transition population.
 
 
 class RGANumber(RGAIndividual):
@@ -264,15 +265,17 @@ class FunctionMinMax2(GeneticAlgorithm):
         return self.population.individuals[0]
 
 if __name__ == '__main__':
+    random.seed("lab1")
     def run_ga(population_size, function, bounds, iterations):
         ga = FunctionMinMax2(population_size, function, bounds)
         ga.run(iterations)
         return ga.results
 
     results = dict()
-    population_size = 20
-    iterations = 5
+    population_size = 50
+    iterations = 50
 
+    start = time.time()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = {
             'ga1': executor.submit(run_ga, population_size, BraninsRcosFunction(), [(2.5, 10), (7.5, 15)], iterations),
@@ -283,16 +286,18 @@ if __name__ == '__main__':
 
         for key, future in futures.items():
             results[key] = future.result()
+    finish = time.time() - start
+    print(finish)
 
     # Collect result:
     merged = dict()
+
     for i in range(iterations):
         merged[i] = {'points':[],'best_individ':None,'average':None}
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]) ,results['ga1'][i])))
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga2'][i])))
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga3'][i])))
         merged[i]['points'].extend(list(map(lambda ind: (ind.genome[0], ind.genome[1]), results['ga4'][i])))
-
     # Calculate best and average
     f = BraninsRcosFunction()
     for i in range(iterations):
