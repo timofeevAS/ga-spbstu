@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 
 class Individual(ABC):
-    def __init__(self, genome: int):
+    def __init__(self, genome):
         self.genome = genome
 
     @abstractmethod
