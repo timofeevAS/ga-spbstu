@@ -1,9 +1,11 @@
 import random
+from collections import deque
 from typing import List, Tuple
 
+from core.ga import GeneticAlgorithm
 from core.individual import Individual
 from core.population import Population
-from utils.tsp import generate_ordinal_tour
+from utils.tsp import generate_ordinal_tour, read_tsp_full_matrix
 
 
 class OrdinalTourIndividual(Individual):
@@ -13,10 +15,14 @@ class OrdinalTourIndividual(Individual):
 
     def mutate(self) -> None:
         # Two random indexes.
-        idx1, idx2 = random.sample(range(1, len(self.genome) - 2), 2)
+        # Mutation of "phenotype".
+        tour = self.get_tour()
+        idx1, idx2 = random.sample(range(1, len(tour) - 2), 2)
 
         # Swap.
-        self.genome[idx1], self.genome[idx2] = self.genome[idx2], self.genome[idx1]
+        tour[idx1], tour[idx2] = tour[idx2], tour[idx1]
+
+        self.genome = generate_ordinal_tour(tour, self.ordinal)
 
     def crossover(self, other: "OrdinalTourIndividual") -> Tuple["OrdinalTourIndividual", "OrdinalTourIndividual"]:
         if len(other.genome) != len(self.genome):
@@ -105,3 +111,101 @@ class TSPPopulationOrdinalAdjacencyMatrix(Population):
             current_node = next_node
 
         return tour_cost
+
+    def copy(self) -> "TSPPopulationOrdinalAdjacencyMatrix":
+        return TSPPopulationOrdinalAdjacencyMatrix(self.population_size, self.adjacency_matrix)
+
+class TSPGeneticAlgorithm(GeneticAlgorithm):
+    def __init__(self, population_size: int, tsp_file_path: str, crossover_p: float, mutation_p: float):
+        super().__init__(population_size, crossover_p, mutation_p)
+        self.tsp_data = read_tsp_full_matrix(tsp_file_path)
+        self.population = TSPPopulationOrdinalAdjacencyMatrix(self.population_size,
+                                                              self.tsp_data.adjacency_matrix)
+
+
+    def round(self) -> None:
+        # Any round of genetic algorithm starts with:
+        # 1. Selection.
+        # 2. Reproduction.
+        # 3. Mutation.
+        # 4. Reduction (to initial size).
+
+        # 1. Selection:
+        self.selection(3, 2)
+
+        # 2. Reproduction.
+        self.reproduction()
+
+        # 3. Mutation.
+        self.mutation()
+
+        # 4. Reduction.
+        self.reduction()
+
+    def selection(self, group_size: int = 2, top_count: int = 1) -> None:
+        # Tournament selection;
+        tmp_individuals = self.population.individuals.copy()
+        random.shuffle(tmp_individuals)
+
+        # Get groups for tournament selection.
+        groups = []
+        tmp_individuals = deque(tmp_individuals)
+        while tmp_individuals:
+            group = []
+            for i in range(group_size):
+                if not tmp_individuals:
+                    break
+                individ = tmp_individuals.pop()
+                group.append(individ)
+
+            groups.append(group)
+
+        tmp_individuals = []
+        for g in groups:
+            g.sort(key=lambda x: self.population.fitness_function(x))
+            tmp_individuals += g[:top_count]
+
+        self.population.individuals = tmp_individuals
+
+    def reproduction(self) -> None:
+        p = self.population
+        childs = []
+
+        for i in range(self.population_size):
+            if random.random() <= self.crossover_p:
+                parent1, parent2 = random.choices(self.population.individuals, k=2)
+
+                c1, c2 = parent1.crossover(parent2)
+
+                # Mutation for childs
+                if random.random() <= self.mutation_p:
+                    c1.mutate()
+
+                if random.random() <= self.mutation_p:
+                    c2.mutate()
+                childs.append(c1)
+                childs.append(c2)
+
+
+        p.individuals.extend(childs)
+
+
+    def mutation(self) -> None:
+        # In this case we implement mutation inside reproduction ONLY for childs.
+        pass
+
+    def reduction(self) -> None:
+        p = self.population
+        p.individuals.sort(key=lambda x: p.fitness_function(x))
+        p.individuals = p.individuals[:p.population_size]
+
+    def run(self, iter_count: int) -> None:
+        for i in range(iter_count):
+            self.round()
+
+if __name__ == '__main__':
+    ga = TSPGeneticAlgorithm(10, '../examples/tsp/bays29.tsp', 0.6, 0.1)
+    ga.run(100)
+
+    for individ in ga.population.individuals[:5]:
+        print(f'{individ}: {ga.population.fitness_function(individ)}')
