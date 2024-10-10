@@ -125,6 +125,7 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
         self.tsp_data = read_tsp_full_matrix(tsp_file_path)
         self.population = TSPPopulationOrdinalAdjacencyMatrix(self.population_size,
                                                               self.tsp_data.adjacency_matrix)
+        self.story = []
 
 
     def round(self) -> None:
@@ -209,6 +210,27 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
 
         p.individuals = bests + p.individuals[elite_count:]
 
+    def add_random_individuals(self):
+        random_individs_count = 2 * self.population_size
+        for _ in range(random_individs_count):
+            random_individ: OrdinalTourIndividual = random.choice(self.population.individuals)
+            tour = random_individ.get_tour()
+
+            cut_position = random.randint(1, len(tour) - 2)
+
+            # First part of tour
+            first_part = tour[:cut_position]
+
+            # Shuffle another part
+            remaining_part = tour[cut_position:len(tour)-1]
+            random.shuffle(remaining_part)
+
+            # Concat
+            new_tour = generate_ordinal_tour(first_part + remaining_part + [tour[-1]], random_individ.ordinal)
+
+
+            new_individ = OrdinalTourIndividual(new_tour, random_individ.ordinal)
+            self.population.individuals.append(new_individ)
 
     def run(self, iter_count: int) -> None:
         for i in range(iter_count):
@@ -216,9 +238,20 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
             if i % 10 == 0:
                 print(f'{i}: {self.population.fitness_function(self.population.individuals[0])}')
 
+            self.story.append(self.population.fitness_function(self.population.individuals[0]))
+
+            if len(self.story) == 100:
+                # Every 100 iteration check story for unique values
+                if len(set(self.story)) <= 3:
+                    self.add_random_individuals()
+                else:
+                    print(set(self.story))
+                self.story=[]
+
+
 if __name__ == '__main__':
-    ga = TSPGeneticAlgorithm(300, '../examples/tsp/bays29.tsp', 0.5, 0.1)
-    ga.run(1000)
+    ga = TSPGeneticAlgorithm(300, '../examples/tsp/bays29.tsp', 0.7, 0.2)
+    ga.run(10000)
     # best tour for bays29
     indices = [0, 27, 5, 11, 8, 4, 25, 28, 2, 1, 19, 9, 3, 14, 17, 16, 13, 21, 10, 18, 24, 6, 22, 26, 7, 23, 15, 12, 20]
 
