@@ -69,10 +69,10 @@ class TSP1Tests(unittest.TestCase):
         population = TSPPopulationOrdinalAdjacencyMatrix(2, adjacency_matrix)
         # These tours present [[0, 1, 3, 2, 4],[0, 1, 2, 3, 4]];
         # With next costs:
-        # First: 10+25+30+10=75
-        # Second: 10+35+30+10=85
-        self.assertEqual(population.fitness_function(population.individuals[0]), 75.0)
-        self.assertEqual(population.fitness_function(population.individuals[1]), 85.0)
+        # First: 10+25+30+10+10=85
+        # Second: 10+35+30+10+10=95
+        self.assertEqual(population.fitness_function(population.individuals[0]), 85.0)
+        self.assertEqual(population.fitness_function(population.individuals[1]), 95.0)
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,11 +17,13 @@ class OrdinalTourIndividual(Individual):
         # Two random indexes.
         # Mutation of "phenotype".
         tour = self.get_tour()
-        idx1, idx2 = random.sample(range(1, len(tour) - 2), 2)
 
-        # Swap.
-        tour[idx1], tour[idx2] = tour[idx2], tour[idx1]
-
+        swap_rounds = random.randint(1, int(len(tour) / 2))
+        for _ in range(swap_rounds):
+            idx1, idx2 = random.sample(range(1, len(tour) - 2), 2)
+            # Swap.
+            tour[idx1], tour[idx2] = tour[idx2], tour[idx1]
+            
         self.genome = generate_ordinal_tour(tour, self.ordinal)
 
     def crossover(self, other: "OrdinalTourIndividual") -> Tuple["OrdinalTourIndividual", "OrdinalTourIndividual"]:
@@ -110,6 +112,8 @@ class TSPPopulationOrdinalAdjacencyMatrix(Population):
             tour_cost += self.adjacency_matrix[current_node][next_node]
             current_node = next_node
 
+        tour_cost += self.adjacency_matrix[current_node][0] # Increment come back cost. FINISH -> START.
+
         return tour_cost
 
     def copy(self) -> "TSPPopulationOrdinalAdjacencyMatrix":
@@ -171,7 +175,7 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
         p = self.population
         childs = []
 
-        for i in range(self.population_size):
+        while len(childs) < self.population_size:
             if random.random() <= self.crossover_p:
                 parent1, parent2 = random.choices(self.population.individuals, k=2)
 
@@ -197,15 +201,28 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
     def reduction(self) -> None:
         p = self.population
         p.individuals.sort(key=lambda x: p.fitness_function(x))
-        p.individuals = p.individuals[:p.population_size]
+
+        elite_count = int((self.population_size*0.1))
+
+        bests = list(set(p.individuals))[:elite_count] # Elite group is 10% from best uniques
+        random.shuffle(p.individuals)
+
+        p.individuals = bests + p.individuals[elite_count:]
+
 
     def run(self, iter_count: int) -> None:
         for i in range(iter_count):
             self.round()
+            if i % 10 == 0:
+                print(f'{i}: {self.population.fitness_function(self.population.individuals[0])}')
 
 if __name__ == '__main__':
-    ga = TSPGeneticAlgorithm(10, '../examples/tsp/bays29.tsp', 0.6, 0.1)
-    ga.run(100)
+    ga = TSPGeneticAlgorithm(300, '../examples/tsp/bays29.tsp', 0.5, 0.1)
+    ga.run(1000)
+    # best tour for bays29
+    indices = [0, 27, 5, 11, 8, 4, 25, 28, 2, 1, 19, 9, 3, 14, 17, 16, 13, 21, 10, 18, 24, 6, 22, 26, 7, 23, 15, 12, 20]
+
+    print(f'Best tour cost: {ga.population.fitness_function(OrdinalTourIndividual(generate_ordinal_tour(indices, list(range(29))), list(range(29))))}')
 
     for individ in ga.population.individuals[:5]:
-        print(f'{individ}: {ga.population.fitness_function(individ)}')
+        print(f'{individ.get_tour()}: {ga.population.fitness_function(individ)}')
