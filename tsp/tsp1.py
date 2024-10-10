@@ -1,10 +1,16 @@
 import random
+import sys
 from collections import deque
 from typing import List, Tuple
+
+import pygame
+from mpmath.libmp import normalize
 
 from core.ga import GeneticAlgorithm
 from core.individual import Individual
 from core.population import Population
+from tsp.drawer.graph_drawer import WIDTH, HEIGHT, WHITE, draw_graph, \
+    normalize_coordinates_in_center, draw_tour, draw_info, GREEN
 from utils.tsp import generate_ordinal_tour, read_tsp_full_matrix
 
 
@@ -248,14 +254,67 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
                     print(set(self.story))
                 self.story=[]
 
+    def get_best_tour(self) -> List[int]:
+        return self.get_best_individ().get_tour()
+
+    def get_best_individ(self):
+        p = self.population
+        best_ind = p.individuals[0]
+        for ind in p.individuals:
+            if p.fitness_function(ind) < p.fitness_function(best_ind):
+                best_ind = ind
+
+        return best_ind
+
+    def run_with_visualisation(self, iter_count: int) -> None:
+        pygame.init()
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Graph Visualization")
+
+        twoD_coords = normalize_coordinates_in_center(self.tsp_data.display_data.copy(), WIDTH, HEIGHT, 0.7)
+        # Normalize twoD coords
+
+
+        running = True
+        iteration = 0
+        while running:
+            iteration+=1
+            self.round()
+
+            self.story.append(self.population.fitness_function(self.population.individuals[0]))
+
+            if len(self.story) == 100:
+                # Every 100 iteration check story for unique values
+                if len(set(self.story)) <= 3:
+                    self.add_random_individuals()
+                else:
+                    print(set(self.story))
+                self.story=[]
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            screen.fill(WHITE)
+            draw_graph(screen, twoD_coords, self.population.adjacency_matrix)
+            draw_tour(screen, twoD_coords, self.get_best_tour())
+            BEST_TOUR_BAYS29 = [0, 27, 5, 11, 8, 4, 25, 28, 2, 1, 19, 9, 3, 14, 17, 16, 13, 21, 10, 18, 24, 6, 22, 26,
+                                7, 23,
+                                15, 12, 20]
+
+            draw_tour(screen, twoD_coords, BEST_TOUR_BAYS29, GREEN)
+            draw_info(screen, {'Current iteration':iteration,
+                               'Best value':self.population.fitness_function(self.get_best_individ())})
+
+
+            pygame.display.flip()  # Обновляем экран
+
+        pygame.quit()
+        sys.exit()
+
 
 if __name__ == '__main__':
-    ga = TSPGeneticAlgorithm(300, '../examples/tsp/bays29.tsp', 0.7, 0.2)
-    ga.run(10000)
-    # best tour for bays29
-    indices = [0, 27, 5, 11, 8, 4, 25, 28, 2, 1, 19, 9, 3, 14, 17, 16, 13, 21, 10, 18, 24, 6, 22, 26, 7, 23, 15, 12, 20]
+    ga = TSPGeneticAlgorithm(100, '../examples/tsp/bays29.tsp', 0.7, 0.2)
+    ga.run_with_visualisation(100)
 
-    print(f'Best tour cost: {ga.population.fitness_function(OrdinalTourIndividual(generate_ordinal_tour(indices, list(range(29))), list(range(29))))}')
 
-    for individ in ga.population.individuals[:5]:
-        print(f'{individ.get_tour()}: {ga.population.fitness_function(individ)}')
