@@ -1,10 +1,12 @@
 import random
 import sys
+import os
 from collections import deque
+import time
 from typing import List, Tuple
 
+import json
 import pygame
-from mpmath.libmp import normalize
 
 from core.ga import GeneticAlgorithm
 from core.individual import Individual
@@ -36,7 +38,7 @@ class OrdinalTourIndividual(Individual):
         if len(other.genome) != len(self.genome):
             raise ValueError(f"Length of genome must be equals: {len(other.genome)} != {len(self.genome)}")
 
-        crossover_idx = random.randint(0, len(self.genome) - 1) # Zero based index
+        crossover_idx = random.randint(0, len(self.genome) - 1)  # Zero based index
 
         child1 = OrdinalTourIndividual(self.genome[:crossover_idx] + other.genome[crossover_idx:], self.ordinal)
         child2 = OrdinalTourIndividual(other.genome[:crossover_idx] + self.genome[crossover_idx:], self.ordinal)
@@ -48,8 +50,6 @@ class OrdinalTourIndividual(Individual):
 
     def __repr__(self):
         return f'{self.genome}'
-
-
 
     def get_tour(self) -> List[int]:
         tour: List[int] = []
@@ -65,15 +65,13 @@ class OrdinalTourIndividual(Individual):
 class TSPPopulationOrdinalAdjacencyMatrix(Population):
     def __init__(self, population_size: int, adjacency_matrix: List[List[float]]):
         super().__init__(population_size)
-        self.individuals: List[OrdinalTourIndividual] = [] # Override typehint
+        self.individuals: List[OrdinalTourIndividual] = []  # Override typehint
 
         self.adjacency_matrix = adjacency_matrix
         self.adjacency_list = self.adjacency_list_from_matrix()
         self.node_count = len(self.adjacency_matrix)  # Count of nodes.
         self.ordinal = list(range(self.node_count))
         self.init_population()
-
-
 
     def adjacency_list_from_matrix(self) -> List[List[int]]:
         adjacency_list = [[] for _ in range(len(self.adjacency_matrix))]
@@ -112,27 +110,30 @@ class TSPPopulationOrdinalAdjacencyMatrix(Population):
         tour_cost = 0.
         tour = individual.get_tour()
 
-        current_node = tour.pop(0) # Start with first node of tour.
+        current_node = tour.pop(0)  # Start with first node of tour.
         while tour:
             next_node = tour.pop()
             tour_cost += self.adjacency_matrix[current_node][next_node]
             current_node = next_node
 
-        tour_cost += self.adjacency_matrix[current_node][0] # Increment come back cost. FINISH -> START.
+        tour_cost += self.adjacency_matrix[current_node][0]  # Increment come back cost. FINISH -> START.
 
         return tour_cost
 
     def copy(self) -> "TSPPopulationOrdinalAdjacencyMatrix":
         return TSPPopulationOrdinalAdjacencyMatrix(self.population_size, self.adjacency_matrix)
 
+
 class TSPGeneticAlgorithm(GeneticAlgorithm):
-    def __init__(self, population_size: int, tsp_file_path: str, crossover_p: float, mutation_p: float):
+    def __init__(self, population_size: int, tsp_file_path: str, crossover_p: float, mutation_p: float,
+                 selection_type: str = 'tournament'):
         super().__init__(population_size, crossover_p, mutation_p)
         self.tsp_data = read_tsp_full_matrix(tsp_file_path)
         self.population = TSPPopulationOrdinalAdjacencyMatrix(self.population_size,
                                                               self.tsp_data.adjacency_matrix)
         self.story = []
-
+        self.stats_dict = {'iterations': []}
+        self.selection_type = selection_type
 
     def round(self) -> None:
         # Any round of genetic algorithm starts with:
@@ -142,7 +143,12 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
         # 4. Reduction (to initial size).
 
         # 1. Selection:
-        self.selection(3, 2)
+        if self.selection_type == 'tournament':
+            self.selection(10, 5)
+        elif self.selection_type == 'roulette':
+            self.roulette_selection()
+        else:
+            raise ValueError('Unexpected type of selection. Use: "tournament" or "roulette"')
 
         # 2. Reproduction.
         self.reproduction()
@@ -152,6 +158,26 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
 
         # 4. Reduction.
         self.reduction()
+
+    def roulette_selection(self):
+        p = self.population
+        p.individuals.sort(key=lambda x: p.fitness_function(x))
+
+        # Add elite individuals.
+        transition_population: List[OrdinalTourIndividual] = []
+        for i in range(10):
+            transition_population.append(p.individuals[i])
+
+        # Here implementation roulette method.
+        fitness_values = list(map(p.fitness_function, p.individuals.copy()))
+        sum_f: float = sum(fitness_values)
+        probabilities = list(map(lambda x: x / sum_f, fitness_values))
+
+        # Get transition population for crossovering.
+        transition_population.extend(random.choices(p.individuals, weights=probabilities, k=p.population_size))
+        p.individuals = transition_population
+
+        p.individuals.sort(key=lambda x: p.fitness_function(x))
 
     def selection(self, group_size: int = 2, top_count: int = 1) -> None:
         # Tournament selection;
@@ -197,9 +223,7 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
                 childs.append(c1)
                 childs.append(c2)
 
-
         p.individuals.extend(childs)
-
 
     def mutation(self) -> None:
         # In this case we implement mutation inside reproduction ONLY for childs.
@@ -209,9 +233,9 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
         p = self.population
         p.individuals.sort(key=lambda x: p.fitness_function(x))
 
-        elite_count = int((self.population_size*0.1))
+        elite_count = int((self.population_size * 0.1))
 
-        bests = list(set(p.individuals))[:elite_count] # Elite group is 10% from best uniques
+        bests = list(set(p.individuals))[:elite_count]  # Elite group is 10% from best uniques
         random.shuffle(p.individuals)
 
         p.individuals = bests + p.individuals[elite_count:]
@@ -228,12 +252,11 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
             first_part = tour[:cut_position]
 
             # Shuffle another part
-            remaining_part = tour[cut_position:len(tour)-1]
+            remaining_part = tour[cut_position:len(tour) - 1]
             random.shuffle(remaining_part)
 
             # Concat
             new_tour = generate_ordinal_tour(first_part + remaining_part + [tour[-1]], random_individ.ordinal)
-
 
             new_individ = OrdinalTourIndividual(new_tour, random_individ.ordinal)
             self.population.individuals.append(new_individ)
@@ -252,7 +275,7 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
                     self.add_random_individuals()
                 else:
                     print(set(self.story))
-                self.story=[]
+                self.story = []
 
     def get_best_tour(self) -> List[int]:
         return self.get_best_individ().get_tour()
@@ -266,6 +289,20 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
 
         return best_ind
 
+    def save_json(self, file_path: str) -> None:
+        self.stats_dict['best_tour'] = self.get_best_tour()
+        self.stats_dict['best_fitness'] = self.population.fitness_function(self.get_best_individ())
+        self.stats_dict['population_size'] = len(self.population.individuals)
+        self.stats_dict['p_m'] = self.mutation_p
+        self.stats_dict['p_c'] = self.crossover_p
+
+        try:
+            with open(file_path, 'w') as f:
+                json.dump(self.stats_dict, f, indent=4)
+            print(f"Stats saved to {file_path}")
+        except Exception as e:
+            print(f"Error via saving: {e}")
+
     def run_with_visualisation(self, iter_count: int) -> None:
         pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -274,13 +311,15 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
         twoD_coords = normalize_coordinates_in_center(self.tsp_data.display_data.copy(), WIDTH, HEIGHT, 0.7)
         # Normalize twoD coords
 
-
         running = True
         iteration = 0
+        start_time = time.time()
         while running:
-            iteration+=1
+            iteration += 1
             self.round()
-
+            best_fitness = self.population.fitness_function(self.get_best_individ())
+            self.stats_dict['iterations'].append(
+                {'time': time.time() - start_time, 'best': best_fitness, 'iteration': iteration})
             self.story.append(self.population.fitness_function(self.population.individuals[0]))
 
             if len(self.story) == 100:
@@ -289,7 +328,7 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
                     self.add_random_individuals()
                 else:
                     print(set(self.story))
-                self.story=[]
+                self.story = []
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -303,18 +342,19 @@ class TSPGeneticAlgorithm(GeneticAlgorithm):
                                 15, 12, 20]
 
             draw_tour(screen, twoD_coords, BEST_TOUR_BAYS29, GREEN)
-            draw_info(screen, {'Current iteration':iteration,
-                               'Best value':self.population.fitness_function(self.get_best_individ())})
+            draw_info(screen, {'Current iteration': iteration,
+                               'Best value': self.population.fitness_function(self.get_best_individ())})
 
-
-            pygame.display.flip()  # Обновляем экран
+            pygame.display.flip()
 
         pygame.quit()
-        sys.exit()
 
 
 if __name__ == '__main__':
-    ga = TSPGeneticAlgorithm(100, '../examples/tsp/bays29.tsp', 0.7, 0.2)
+    ga = TSPGeneticAlgorithm(500, '../examples/tsp/bays29.tsp',
+                             0.7, 0.5)
     ga.run_with_visualisation(100)
+
+    ga.save_json('run1.json')
 
 
