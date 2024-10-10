@@ -23,7 +23,7 @@ class OrdinalTourIndividual(Individual):
             idx1, idx2 = random.sample(range(1, len(tour) - 2), 2)
             # Swap.
             tour[idx1], tour[idx2] = tour[idx2], tour[idx1]
-            
+
         self.genome = generate_ordinal_tour(tour, self.ordinal)
 
     def crossover(self, other: "OrdinalTourIndividual") -> Tuple["OrdinalTourIndividual", "OrdinalTourIndividual"]:
