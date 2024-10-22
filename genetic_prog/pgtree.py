@@ -2,7 +2,7 @@ import random
 from treenode import TerminalNode, OperatorNode
 from basics import FUNCTION_SET, TERMINAL_SET
 
-class GPTree:
+class PGTree:
     def __init__(self, root=None):
         # Initialize the tree with a root node or generate a random tree
         self.root = root if root is not None else self.generate_random_tree()
@@ -79,7 +79,7 @@ class GPTree:
 
 # Example usage:
 if __name__ == "__main__":
-    tree = GPTree()
+    tree = PGTree()
     print("Tree structure:")
     tree.pretty_print()
     # Evaluate the tree with given variable values
