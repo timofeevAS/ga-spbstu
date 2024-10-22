@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 from treenode import TerminalNode, OperatorNode
 from basics import FUNCTION_SET
-from gptree import GPTree
+from pgtree import PGTree
 
 
 def fEaso():
@@ -45,7 +45,7 @@ def fEaso():
     negation = OperatorNode(FUNCTION_SET['*'], TerminalNode(-1), final_product)
 
     # Create the GPTree with the negation as the root
-    tree = GPTree(negation)
+    tree = PGTree(negation)
     return tree
 
 
