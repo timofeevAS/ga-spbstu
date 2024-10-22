@@ -108,6 +108,49 @@ class PGTree:
                 nodes.extend(self._collect_nodes(node.right))
         return nodes
 
+    def swap_subtrees(self, node1, node2):
+        """Swap the subtrees rooted at node1 and node2 by exchanging their instances."""
+        if node1 is None or node2 is None:
+            return
+
+        # Create copies of the subtrees rooted at node1 and node2
+        node1_copy = self._copy_recursive(node1)
+        node2_copy = self._copy_recursive(node2)
+
+        # Replace node1 with node2's copy and node2 with node1's copy
+        self._replace_node(node1, node2_copy)
+        self._replace_node(node2, node1_copy)
+
+    def _replace_node(self, target_node, new_subtree):
+        """Helper method to replace target_node with new_subtree in the tree."""
+        if self.root is target_node:
+            # If the target node is the root, replace the root directly
+            self.root = new_subtree
+        else:
+            # Otherwise, perform a recursive search to replace the node
+            self._replace_node_recursive(self.root, target_node, new_subtree)
+
+    def _replace_node_recursive(self, current_node, target_node, new_subtree):
+        """Recursively search for the target_node and replace it with new_subtree."""
+        if current_node is None:
+            return False
+
+        if isinstance(current_node, OperatorNode):
+            if current_node.left is target_node:
+                current_node.left = new_subtree
+                return True
+            elif current_node.right is target_node:
+                current_node.right = new_subtree
+                return True
+
+            # Recursively search in children
+            replaced_in_left = self._replace_node_recursive(current_node.left, target_node, new_subtree)
+            replaced_in_right = self._replace_node_recursive(current_node.right, target_node,
+                                                             new_subtree) if current_node.right else False
+            return replaced_in_left or replaced_in_right
+
+        return False
+
 # Example usage:
 if __name__ == "__main__":
     tree = PGTree()
