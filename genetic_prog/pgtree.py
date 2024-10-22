@@ -151,6 +151,34 @@ class PGTree:
 
         return False
 
+    def is_correct(self) -> bool:
+        """Check if the tree represents a valid mathematical expression."""
+        if not self.root:
+            return False  # An empty tree is not a valid expression
+        return self._is_correct_recursive(self.root)
+
+    def _is_correct_recursive(self, node) -> bool:
+        """Helper method to recursively check the correctness of the tree."""
+        if isinstance(node, TerminalNode):
+            # A terminal node is always correct
+            return True
+        elif isinstance(node, OperatorNode):
+            # Check for unary operators
+            if node.operator in [FUNCTION_SET['sin'], FUNCTION_SET['cos'], FUNCTION_SET['exp'], FUNCTION_SET['abs']]:
+                # Unary operators should have only one child (left)
+                if node.left is None or node.right is not None:
+                    return False
+                # Recursively check the left child
+                return self._is_correct_recursive(node.left)
+            else:
+                # Binary operators should have both children (left and right)
+                if node.left is None or node.right is None:
+                    return False
+                # Recursively check both children
+                return self._is_correct_recursive(node.left) and self._is_correct_recursive(node.right)
+        # If it's neither a TerminalNode nor an OperatorNode, it's incorrect
+        return False
+
 # Example usage:
 if __name__ == "__main__":
     tree = PGTree()

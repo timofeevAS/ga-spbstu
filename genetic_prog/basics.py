@@ -15,4 +15,4 @@ FUNCTION_SET = {
 }
 
 # Terminal set for variables and constants
-TERMINAL_SET = ['x1', 'x2', 1.0, 2.0, 3.0, 40.0, 4.0]
+TERMINAL_SET = ['x1', 'x2', 1.0, 2.0, 3.0, 4.0]

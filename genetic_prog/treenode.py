@@ -1,4 +1,7 @@
 # Base class for a tree node
+import math
+
+
 class NodeBase:
     def evaluate(self, variables):
         """Evaluate the node given a dictionary of variable values."""
@@ -30,11 +33,27 @@ class OperatorNode(NodeBase):
         self.right = right
 
     def evaluate(self, variables):
-        # Evaluate unary or binary operator
-        if self.right is None:
-            return self.operator(self.left.evaluate(variables))
-        else:
-            return self.operator(self.left.evaluate(variables), self.right.evaluate(variables))
+        """Evaluate the node given a dictionary of variable values."""
+        try:
+            if self.right is None:
+                # Unary operator
+                result = self.operator(self.left.evaluate(variables))
+            else:
+                # Binary operator
+                result = self.operator(self.left.evaluate(variables), self.right.evaluate(variables))
+
+            # Проверка на комплексные значения
+            if isinstance(result, complex):
+                raise ValueError("Evaluation resulted in a complex number")
+
+            # Проверка на переполнение и корректные значения
+            MAX_VALUE = 1e10
+            MIN_VALUE = -1e10
+
+            return result
+
+        except Exception:
+            return float('11111')
 
     def __str__(self):
         if self.right is None:

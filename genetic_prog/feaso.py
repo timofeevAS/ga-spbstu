@@ -5,8 +5,8 @@ from treenode import TerminalNode, OperatorNode
 from basics import FUNCTION_SET
 from pgtree import PGTree
 
-FEASO_RANGE_X1 = (-10, 10)
-FEASO_RANGE_X2 = (-10, 10)
+FEASO_RANGE_X1 = (-5, 5)
+FEASO_RANGE_X2 = (-5, 5)
 
 def fEaso():
     """Create a GPTree representing the function fEaso."""
@@ -82,6 +82,34 @@ def plot_feaso():
     # Show the plot
     plt.show()
 
+
+def plot_f_x1_x2_pgtree(tree: PGTree):
+    """Plot the plot with tree (x1,x2)"""
+    # Generate a grid of values for x1 and x2 in the range -100 to 100
+    x1_values = np.linspace(*FEASO_RANGE_X1, num=100)
+    x2_values = np.linspace(*FEASO_RANGE_X2, num=100)
+    X1, X2 = np.meshgrid(x1_values, x2_values)
+
+    # Compute the function values on the grid
+    Z = np.zeros_like(X1)
+    for i in range(X1.shape[0]):
+        for j in range(X1.shape[1]):
+            variables = {'x1': X1[i, j], 'x2': X2[i, j]}
+            Z[i, j] = tree.evaluate(variables)
+
+    # Plot the surface
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(X1, X2, Z, cmap='viridis')
+
+    # Add labels and title
+    ax.set_title('3D Surface plot of tree(x1, x2)')
+    ax.set_xlabel('x1')
+    ax.set_ylabel('x2')
+    ax.set_zlabel('tree(x1, x2)')
+
+    # Show the plot
+    plt.show()
 
 # Example usage:
 if __name__ == "__main__":
