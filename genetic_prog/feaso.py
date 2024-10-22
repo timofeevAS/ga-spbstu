@@ -5,6 +5,8 @@ from treenode import TerminalNode, OperatorNode
 from basics import FUNCTION_SET
 from pgtree import PGTree
 
+FEASO_RANGE_X1 = (-10, 10)
+FEASO_RANGE_X2 = (-10, 10)
 
 def fEaso():
     """Create a GPTree representing the function fEaso."""
@@ -55,8 +57,8 @@ def plot_feaso():
     tree = fEaso()
 
     # Generate a grid of values for x1 and x2 in the range -100 to 100
-    x1_values = np.linspace(-10, 10, 100)
-    x2_values = np.linspace(-10, 10, 100)
+    x1_values = np.linspace(*FEASO_RANGE_X1, num=100)
+    x2_values = np.linspace(*FEASO_RANGE_X2, num=100)
     X1, X2 = np.meshgrid(x1_values, x2_values)
 
     # Compute the function values on the grid
