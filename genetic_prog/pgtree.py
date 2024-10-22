@@ -77,6 +77,20 @@ class PGTree:
             raise ValueError("The tree is empty.")
         return self.root.evaluate(variables)
 
+    def copy(self):
+        """Create a deep copy of the tree."""
+        return PGTree(self._copy_recursive(self.root))
+
+    def _copy_recursive(self, node):
+        """Helper method to recursively copy a tree."""
+        if isinstance(node, TerminalNode):
+            return TerminalNode(node.value)
+        elif isinstance(node, OperatorNode):
+            left_copy = self._copy_recursive(node.left)
+            right_copy = self._copy_recursive(node.right) if node.right else None
+            return OperatorNode(node.operator, left_copy, right_copy)
+        return None
+
 # Example usage:
 if __name__ == "__main__":
     tree = PGTree()
