@@ -70,9 +70,21 @@ class GPTree:
             self._to_dot_recursive(node.left, dot_content, node_id)
             if node.right is not None:
                 self._to_dot_recursive(node.right, dot_content, node_id)
+
+    def evaluate(self, variables):
+        """Evaluate the tree using the provided variable values."""
+        if not self.root:
+            raise ValueError("The tree is empty.")
+        return self.root.evaluate(variables)
+
 # Example usage:
 if __name__ == "__main__":
     tree = GPTree()
     print("Tree structure:")
     tree.pretty_print()
-    tree.to_dot()
+    # Evaluate the tree with given variable values
+    variables = {'x1': 2.0, 'x2': 3.0}
+    result = tree.evaluate(variables)
+    print(f"Evaluation result: {result}")
+    # Save the tree as a dot file
+    tree.to_dot("tree.dot")
