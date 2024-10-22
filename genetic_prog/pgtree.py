@@ -91,6 +91,23 @@ class PGTree:
             return OperatorNode(node.operator, left_copy, right_copy)
         return None
 
+    def get_random_node(self):
+        """Select a random node from the tree."""
+        # Collect all nodes in the tree
+        nodes = self._collect_nodes(self.root)
+        # Return a random node if the list is not empty
+        return random.choice(nodes) if nodes else None
+
+    def _collect_nodes(self, node):
+        """Helper method to collect all nodes in the tree."""
+        nodes = [node]
+        if isinstance(node, OperatorNode):
+            # Recursively collect nodes from the left and right children
+            nodes.extend(self._collect_nodes(node.left))
+            if node.right is not None:
+                nodes.extend(self._collect_nodes(node.right))
+        return nodes
+
 # Example usage:
 if __name__ == "__main__":
     tree = PGTree()
