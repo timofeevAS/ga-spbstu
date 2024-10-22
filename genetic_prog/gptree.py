@@ -37,8 +37,42 @@ class GPTree:
             if node.right is not None:
                 self.pretty_print(node.right, indent + 1)
 
+    def to_dot(self, filename="tree.dot"):
+        """Export the tree to a .dot file for visualization with Graphviz."""
+        if not self.root:
+            raise ValueError("The tree is empty.")
+
+        # Start building the .dot content
+        dot_content = ["digraph G {"]
+        self._to_dot_recursive(self.root, dot_content)
+        dot_content.append("}")
+
+        # Write to the specified file
+        with open(filename, "w") as file:
+            file.write("\n".join(dot_content))
+        print(f"Dot file saved as {filename}")
+
+    def _to_dot_recursive(self, node, dot_content, parent_id=None):
+        """Helper method to recursively build the .dot content."""
+        # Generate a unique ID for each node
+        node_id = id(node)
+        label = str(node.value) if isinstance(node, TerminalNode) else node.operator.__name__
+
+        # Add the current node to the .dot content
+        dot_content.append(f'    {node_id} [label="{label}"];')
+
+        # If there's a parent, create an edge from the parent to the current node
+        if parent_id is not None:
+            dot_content.append(f'    {parent_id} -> {node_id};')
+
+        # Recursively process children if the node is an operator
+        if isinstance(node, OperatorNode):
+            self._to_dot_recursive(node.left, dot_content, node_id)
+            if node.right is not None:
+                self._to_dot_recursive(node.right, dot_content, node_id)
 # Example usage:
 if __name__ == "__main__":
     tree = GPTree()
     print("Tree structure:")
     tree.pretty_print()
+    tree.to_dot()
