@@ -1,3 +1,4 @@
+import math
 import random
 from collections import deque
 from typing import Optional, List
@@ -11,6 +12,8 @@ from genetic_prog.basics import TERMINAL_SET, FUNCTION_SET
 from genetic_prog.feaso import FEASO_RANGE_X1, FEASO_RANGE_X2, fEaso, plot_f_x1_x2_pgtree
 from genetic_prog.treenode import TerminalNode, OperatorNode
 from pgtree import PGTree
+
+MAX_DEPTH = 10
 
 class PGIndividual:
     def __init__(self, genome: PGTree):
@@ -81,27 +84,26 @@ class PGPopulationFeaso(Population):
 
     def fitness_function(self, individual: PGIndividual) -> float:
         """Compare with feaoso function"""
-        x1_values = np.linspace(*FEASO_RANGE_X1, num=10)
-        x2_values = np.linspace(*FEASO_RANGE_X2, num=10)
-        # Initialize the sum of abs differences
-        total_error = 0.0
-        count = 0
 
-        # Iterate over the grid and compute abs differences
-        for x1 in x1_values:
-            for x2 in x2_values:
-                variables = {'x1': x1, 'x2': x2}
-                individual_val = individual.genome.evaluate(variables)
-                etalon_val = self.etalon.evaluate(variables)
+        vars = [
+            {'x1': np.pi, 'x2': np.pi},
+            {'x1': 5, 'x2': 5},
+            {'x1': np.pi/2, 'x2': np.pi/2},
+            {'x1': 1.5*np.pi, 'x2': 1.5*np.pi},
+            {'x1': 3*np.pi, 'x2': 3*np.pi},
+            {'x1': 0, 'x2': 0},
+            {'x1': 2.2, 'x2': 4.5},
+            {'x1': 1.5, 'x2': 4},
+            {'x1': -5, 'x2': 5},
+        ]
+        total = 0
 
-                # Calculate abs difference
-                squared_difference = abs((individual_val - etalon_val))
-                total_error += squared_difference
-                count += 1
+        for var in vars:
+            etalon_val = self.etalon.evaluate(var)
+            ind_val = individual.genome.evaluate(var)
+            total += abs(etalon_val - ind_val)
 
-        # Compute the mean squared error
-        mae = total_error / count
-        return mae
+        return total + abs(individual.genome.evaluate({'x1':math.pi, 'x2':math.pi}) + 1)
 
 class PGGeneticAlgorithmFeaso(GeneticAlgorithm):
     def __init__(self, population_size: int, crossover_p: float, mutation_p: float, elite_count: int, debug_info: bool = False):
@@ -126,6 +128,8 @@ class PGGeneticAlgorithmFeaso(GeneticAlgorithm):
         for ind in self.population.individuals:
             if not ind.genome.is_correct():
                 self.population.individuals.remove(ind)
+            else:
+                ind.genome.prune_tree(MAX_DEPTH)
 
     def round(self) -> None:
         # 0. Remove incorrects.
@@ -210,10 +214,11 @@ class PGGeneticAlgorithmFeaso(GeneticAlgorithm):
         return self.population.individuals[0]
 
 if __name__ == '__main__':
-    ga = PGGeneticAlgorithmFeaso(50, 0.5, 0.01, 5)
-    ga.run_for(100)
+    ga = PGGeneticAlgorithmFeaso(1000, 0.5, 0.1, 5)
+    ga.run_for(30)
 
     best = ga.get_best()
     print(f'Mae: {ga.population.fitness_function(best)}')
     print(f'f: {best.genome.root}')
+    print(f'{best.genome.evaluate({"x1": math.pi, "x2": math.pi}) - -1}')
     plot_f_x1_x2_pgtree(best.genome)

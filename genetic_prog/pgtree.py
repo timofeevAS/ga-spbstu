@@ -179,6 +179,47 @@ class PGTree:
         # If it's neither a TerminalNode nor an OperatorNode, it's incorrect
         return False
 
+    def prune_tree(self, max_depth=10):
+        """Prunes the tree to ensure that it does not exceed the specified maximum depth."""
+        if not self.root:
+            return
+        self.root = self._prune_recursive(self.root, max_depth)
+
+    def _prune_recursive(self, node, depth_remaining):
+        """Helper method to recursively prune the tree."""
+        if depth_remaining == 0:
+            # If the maximum depth is reached, replace the node with a terminal node
+            terminal = random.choice(TERMINAL_SET)
+            return TerminalNode(terminal)
+
+        if isinstance(node, OperatorNode):
+            # Recursively prune children if the node is an operator
+            node.left = self._prune_recursive(node.left, depth_remaining - 1)
+            if node.right is not None:
+                node.right = self._prune_recursive(node.right, depth_remaining - 1)
+
+        # Return the node itself if it's a TerminalNode or has been pruned
+        return node
+
+    def get_depth(self):
+        """Returns the depth of the tree, defined as the longest path from the root to any leaf node."""
+        if not self.root:
+            return 0
+        return self._get_depth_recursive(self.root)
+
+    def _get_depth_recursive(self, node):
+        """Helper method to recursively calculate the depth of the tree."""
+        if isinstance(node, TerminalNode):
+            # A terminal node has a depth of 1 (itself)
+            return 1
+        elif isinstance(node, OperatorNode):
+            # Calculate the depth of each subtree
+            left_depth = self._get_depth_recursive(node.left)
+            right_depth = self._get_depth_recursive(node.right) if node.right is not None else 0
+            # Return the greater of the two depths, plus one for the current node
+            return max(left_depth, right_depth) + 1
+        return 0
+
 # Example usage:
 if __name__ == "__main__":
     tree = PGTree()
