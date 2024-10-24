@@ -5,8 +5,8 @@ from treenode import TerminalNode, OperatorNode
 from basics import FUNCTION_SET
 from pgtree import PGTree
 
-FEASO_RANGE_X1 = (math.pi/2, 1.5*math.pi)
-FEASO_RANGE_X2 = (math.pi/2, 1.5*math.pi)
+FEASO_RANGE_X1 = (-5, 5)
+FEASO_RANGE_X2 = (-5, 5)
 
 def fEaso():
     """Create a GPTree representing the function fEaso."""
@@ -115,6 +115,6 @@ def plot_f_x1_x2_pgtree(tree: PGTree):
 if __name__ == "__main__":
     # Plot the fEaso function
     plot_feaso()
-    fEaso().to_dot()
+    fEaso().to_dot('feaso.dot')
     print(fEaso().get_depth())
     print(f'min: {fEaso().evaluate({"x1":math.pi, "x2":math.pi})}')

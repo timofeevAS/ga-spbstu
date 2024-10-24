@@ -1,3 +1,4 @@
+import json
 import math
 import random
 import time
@@ -13,6 +14,20 @@ from genetic_prog.basics import TERMINAL_SET, FUNCTION_SET
 from genetic_prog.feaso import FEASO_RANGE_X1, FEASO_RANGE_X2, fEaso, plot_f_x1_x2_pgtree
 from genetic_prog.treenode import TerminalNode, OperatorNode
 from pgtree import PGTree
+
+
+def convert_to_math_expression(s):
+    import re
+    s = s.replace("mul", "*")
+    s = s.replace("pow", "**")
+    s = s.replace("sub", "-")
+    s = s.replace("add", "+")
+    s = s.replace("truediv", "/")
+
+    # Убираем лишние пробелы
+    s = re.sub(r'\s+', ' ', s).strip()
+
+    return s
 
 MAX_DEPTH = 10
 TRAINING_DATA = [
@@ -125,8 +140,18 @@ class PGGeneticAlgorithmFeaso(GeneticAlgorithm):
         self.elite_individuals: List[PGIndividual] = []
         self.debug_mode = debug_info
         self.steps_info = []
-        self.step = 0
         self.start_time = 0
+        self.step = 0
+        self.total_info = {'best': None, 'steps': [], 'pc': self.crossover_p, 'pm': self.mutation_p,
+                           'n': self.population_size}
+
+    def save_info(self) -> None:
+        info = {}
+        info['time'] = time.time() - self.start_time
+        info['step'] = self.step
+        info['best_val'] = self.population.fitness_function(self.get_best())
+        self.total_info['steps'].append(info)
+        self.total_info['best'] = convert_to_math_expression(str(self.get_best().genome.root))
 
     def debug(self, info: str):
         if self.debug_mode is False:
@@ -163,6 +188,10 @@ class PGGeneticAlgorithmFeaso(GeneticAlgorithm):
         self.debug('Start reduction')
         # 4. Reduction.
         self.reduction()
+
+        self.step += 1
+        self.save_info()
+
 
     def selection(self, group_size: int = 2, top_count: int = 1) -> None:
         # Tournament selection;
@@ -218,19 +247,32 @@ class PGGeneticAlgorithmFeaso(GeneticAlgorithm):
     def run(self) -> None:
         raise NotImplemented("Still not implemented")
 
-    def run_for(self, iteration: int):
+    def run_for(self, iteration: int, filename='result.json'):
+        self.start_time = time.time()
         for i in range(iteration):
             self.round()
             print(f'Round {i} finished.')
+
+        with open(filename, "w", encoding="utf-8") as json_file:
+            json.dump(self.total_info, json_file, ensure_ascii=False, indent=4)
 
     def get_best(self) -> PGIndividual:
         self.population.sort_by_fitness()
         return self.population.individuals[0]
 
-if __name__ == '__main__':
-    ga = PGGeneticAlgorithmFeaso(600, 0.6, 0.01, 250)
-    ga.run_for(40)
+def expirementA():
+    import string
+    def generate_random_hash(length=5):
+        characters = string.ascii_letters + string.digits
+        random_hash = ''.join(random.choice(characters) for _ in range(length))
+        return random_hash
 
+    for _ in range(30):
+        file_name = f"ga_result_{generate_random_hash()}.json"
+        ga = PGGeneticAlgorithmFeaso(400, 0.6, 0.05, 40)
+        ga.run_for(100, file_name)
+
+def compare_with_check_data(ga: PGGeneticAlgorithmFeaso):
     best = ga.get_best()
     print(f'Mae: {ga.population.fitness_function(best)}')
     print(f'f: {best.genome.root}')
@@ -247,7 +289,26 @@ if __name__ == '__main__':
         abs_delta = abs(feaso_val - best_val)
         total_error += abs_delta
         print(f'Round {i}: {abs_delta}')
-        i+=1
+        i += 1
 
-    print(f'MAE:{total_error/len(CHECK_DATA)}')
+    print(f'MAE:{total_error / len(CHECK_DATA)}')
+
+def experimentB():
+    import string
+    def generate_random_hash(length=5):
+        characters = string.ascii_letters + string.digits
+        random_hash = ''.join(random.choice(characters) for _ in range(length))
+        return random_hash
+    for _ in range(20):
+        file_name = f"ga_result_expB_{generate_random_hash()}.json"
+        ga = PGGeneticAlgorithmFeaso(2500, 0.6, 0.05, 90)
+        ga.run_for(20 , file_name)
+
+        compare_with_check_data(ga)
+        ga.get_best().genome.to_dot(file_name+'.dot')
+
+if __name__ == '__main__':
+    #expirementA()
+    experimentB()
+
 
