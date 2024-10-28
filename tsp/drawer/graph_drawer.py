@@ -6,6 +6,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
+PHEROMONE_COLOR = pygame.color.Color(125,0,225,50)
 
 
 def normalize_coordinates_in_center(twoD_coords, width, height, scale_factor=1.0):
@@ -48,6 +49,28 @@ def draw_graph(screen, coordinates, adjacency_matrix):
     pygame.draw.circle(screen, GREEN, coordinates[-1], 10)
 
 
+def draw_ant_graph(screen, coordinates, adjacency_matrix, pheromones):
+    num_vertices = len(coordinates)
+
+    # Create a transparent surface with the same size as the screen
+    transparent_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+
+    for i in range(num_vertices):
+        for j in range(i + 1, num_vertices):
+            if adjacency_matrix[i][j] > 0:
+                # Draw on the transparent surface
+                pygame.draw.line(transparent_surface, PHEROMONE_COLOR,
+                                 coordinates[i], coordinates[j],
+                                 int(30 * pheromones[i][j]))
+
+    # Blit the transparent surface onto the main screen
+    screen.blit(transparent_surface, (0, 0))
+
+    for coord in coordinates:
+        pygame.draw.circle(screen, RED, coord, 10)
+
+    pygame.draw.circle(screen, GREEN, coordinates[0], 10)
+
 def draw_tour(screen, coordinates, tour, color=BLUE):
     if len(tour) < 2:
         return
@@ -59,7 +82,7 @@ def draw_tour(screen, coordinates, tour, color=BLUE):
         start_pos = coordinates[start_index]
         end_pos = coordinates[end_index]
 
-        pygame.draw.line(screen, color, start_pos, end_pos, 4)
+        pygame.draw.line(screen, color, start_pos, end_pos, 2)
 
     start_pos = coordinates[tour[-1]]  # последняя вершина
     end_pos = coordinates[tour[0]]  # первая вершина
