@@ -154,12 +154,12 @@ class AntColonyTsp:
                     running = False
 
             screen.fill(WHITE)
-            #draw_tour(screen, twoD_coords, self.best_solution)
+            draw_tour(screen, twoD_coords, self.best_solution)
             BEST_TOUR_BAYS29 = [0, 27, 5, 11, 8, 4, 25, 28, 2, 1, 19, 9, 3, 14, 17, 16, 13, 21, 10, 18, 24, 6, 22, 26,
                                 7, 23,
                                 15, 12, 20]
 
-            #draw_tour(screen, twoD_coords, BEST_TOUR_BAYS29, GREEN)
+            draw_tour(screen, twoD_coords, BEST_TOUR_BAYS29, GREEN)
             draw_info(screen, {'Current iteration': iteration,
                                     'Best value': self.best_distance})
             draw_ant_graph(screen, twoD_coords, self.tsp_data.adjacency_matrix, self.pheromone)

@@ -71,6 +71,13 @@ def draw_ant_graph(screen, coordinates, adjacency_matrix, pheromones):
 
     pygame.draw.circle(screen, GREEN, coordinates[0], 10)
 
+    font = pygame.font.Font(None, 20)  # Create a font object with a size of 36
+    for index, coord in enumerate(coordinates):
+        # Render the text (vertex number) at the specified position
+        text_surface = font.render(str(index), True, BLACK)  # Render the index as text
+        screen.blit(text_surface, (coord[0] + 5, coord[1] + 5))  # Draw text near the vertex
+
+
 def draw_tour(screen, coordinates, tour, color=BLUE):
     if len(tour) < 2:
         return
